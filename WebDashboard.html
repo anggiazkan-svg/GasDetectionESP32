@@ -72,18 +72,20 @@
     function updateValue(id, value, satuan = "ppm") {
       document.getElementById(id).innerText = value ? `${value} ${satuan}` : "-";
     }
+
     function updateStatus(id, status) {
       const el = document.getElementById(id);
       el.innerText = status || "-";
       el.className = "status " + (status || "");
     }
 
+    // Sesuai struktur di Firebase
     const sensors = ["CH4", "CO2", "NH3"];
     sensors.forEach(sensor => {
-      onValue(ref(db, `SensorData/${sensor}/${sensor}_ppm`), snap => {
+      onValue(ref(db, `SensorData/${sensor}_ppm`), snap => {
         updateValue(`${sensor}_ppm`, snap.val());
       });
-      onValue(ref(db, `SensorData/${sensor}/${sensor}_status`), snap => {
+      onValue(ref(db, `SensorData/${sensor}_status`), snap => {
         updateStatus(`${sensor}_status`, snap.val());
       });
     });
