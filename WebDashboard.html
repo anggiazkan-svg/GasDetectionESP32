@@ -1,87 +1,90 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Monitoring Gas Realtime</title>
+  <meta charset="UTF-8">
+  <title>Gas Detection ESP32 Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body { font-family: Arial, sans-serif; background: #f3f3f3; padding: 20px; }
-    h1 { text-align: center; color: #333; }
-    .card {
-      background: white; border-radius: 10px; padding: 20px; 
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 15px;
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #f5f6fa;
     }
-    .value { font-size: 24px; font-weight: bold; color: #007bff; }
-    .status { font-size: 18px; margin-top: 5px; }
+    h1 {
+      background: #1565c0;
+      color: white;
+      padding: 15px 0;
+    }
+    .card {
+      display: inline-block;
+      background-color: white;
+      border-radius: 15px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      width: 220px;
+      margin: 20px;
+      padding: 15px;
+    }
+    .value { font-size: 1.8rem; margin: 10px 0; }
+    .status { font-weight: bold; color: white; padding: 8px 15px; border-radius: 10px; display: inline-block; }
+    .AMAN { background-color: green; }
+    .WASPADA { background-color: orange; }
   </style>
 </head>
 <body>
-  <h1>Monitoring Gas Realtime</h1>
 
-  <div id="CH4" class="card">
-    <h2>CH₄ (Metana)</h2>
-    <div class="value" id="CH4_ppm">-</div>
-    <div class="status" id="CH4_status">-</div>
+  <h1>Gas Detection ESP32</h1>
+
+  <div id="container">
+    <div class="card">
+      <h2>CH₄ (Methane)</h2>
+      <div class="value" id="CH4_ppm">Loading...</div>
+      <div class="status" id="CH4_status">-</div>
+    </div>
+    <div class="card">
+      <h2>CO₂ (Carbon Dioxide)</h2>
+      <div class="value" id="CO2_ppm">Loading...</div>
+      <div class="status" id="CO2_status">-</div>
+    </div>
+    <div class="card">
+      <h2>NH₃ (Ammonia)</h2>
+      <div class="value" id="NH3_ppm">Loading...</div>
+      <div class="status" id="NH3_status">-</div>
+    </div>
   </div>
 
-  <div id="CO2" class="card">
-    <h2>CO₂ (Karbondioksida)</h2>
-    <div class="value" id="CO2_ppm">-</div>
-    <div class="status" id="CO2_status">-</div>
-  </div>
-
-  <div id="NH3" class="card">
-    <h2>NH₃ (Amonia)</h2>
-    <div class="value" id="NH3_ppm">-</div>
-    <div class="status" id="NH3_status">-</div>
-  </div>
-
-  <!-- Firebase SDK (Modular v9+) -->
   <script type="module">
-    // Import SDK Modular
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
-    // Konfigurasi Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyDMDTxeGLICvfY7l8ArS3d2C1rUndkdclM",
       authDomain: "monitoringgasesp32.firebaseapp.com",
-      databaseURL: "https://monitoringgasesp32-default-rtdb.firebaseio.com",
+      databaseURL: "https://monitoringgasesp32-default-rtdb.firebaseio.com/",
       projectId: "monitoringgasesp32",
       storageBucket: "monitoringgasesp32.firebasestorage.app",
       messagingSenderId: "528368353087",
       appId: "1:528368353087:web:836514d911ce17f4271d8a"
     };
 
-    // Inisialisasi Firebase
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // Fungsi update value & status
-    function updateValue(id, value) {
-      document.getElementById(id).textContent = value ? value + " ppm" : "-";
+    function updateValue(id, value, satuan = "ppm") {
+      document.getElementById(id).innerText = value ? `${value} ${satuan}` : "-";
+    }
+    function updateStatus(id, status) {
+      const el = document.getElementById(id);
+      el.innerText = status || "-";
+      el.className = "status " + (status || "");
     }
 
-    function updateStatus(id, value) {
-      document.getElementById(id).textContent = value || "-";
-      document.getElementById(id).style.color =
-        value === "Aman" ? "green" : (value === "Waspada" ? "red" : "black");
-    }
-
-    // Sensor List
     const sensors = ["CH4", "CO2", "NH3"];
-
-    // Listener untuk setiap sensor
     sensors.forEach(sensor => {
-      const ppmRef = ref(db, `/SensorData/${sensor}/${sensor}_ppm`);
-      const statusRef = ref(db, `/SensorData/${sensor}/${sensor}_status`);
-
-      onValue(ppmRef, snapshot => {
-        updateValue(`${sensor}_ppm`, snapshot.val());
+      onValue(ref(db, `SensorData/${sensor}/${sensor}_ppm`), snap => {
+        updateValue(`${sensor}_ppm`, snap.val());
       });
-
-      onValue(statusRef, snapshot => {
-        updateStatus(`${sensor}_status`, snapshot.val());
+      onValue(ref(db, `SensorData/${sensor}/${sensor}_status`), snap => {
+        updateStatus(`${sensor}_status`, snap.val());
       });
     });
   </script>
