@@ -1,19 +1,22 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <title>Gas Detection ESP32 Dashboard</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gas Detection ESP32</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       text-align: center;
       background-color: #f5f6fa;
+      margin: 0;
+      padding: 0;
     }
     h1 {
       background: #1565c0;
       color: white;
-      padding: 15px 0;
+      padding: 20px 0;
+      margin: 0;
     }
     .card {
       display: inline-block;
@@ -24,8 +27,17 @@
       margin: 20px;
       padding: 15px;
     }
-    .value { font-size: 1.8rem; margin: 10px 0; }
-    .status { font-weight: bold; color: white; padding: 8px 15px; border-radius: 10px; display: inline-block; }
+    .value {
+      font-size: 1.8rem;
+      margin: 10px 0;
+    }
+    .status {
+      font-weight: bold;
+      color: white;
+      padding: 8px 15px;
+      border-radius: 10px;
+      display: inline-block;
+    }
     .AMAN { background-color: green; }
     .WASPADA { background-color: orange; }
   </style>
@@ -40,11 +52,13 @@
       <div class="value" id="CH4_ppm">Loading...</div>
       <div class="status" id="CH4_status">-</div>
     </div>
+
     <div class="card">
       <h2>CO₂ (Carbon Dioxide)</h2>
       <div class="value" id="CO2_ppm">Loading...</div>
       <div class="status" id="CO2_status">-</div>
     </div>
+
     <div class="card">
       <h2>NH₃ (Ammonia)</h2>
       <div class="value" id="NH3_ppm">Loading...</div>
@@ -52,10 +66,13 @@
     </div>
   </div>
 
+  <!-- Firebase SDKs -->
   <script type="module">
+    // Import SDKs modern Firebase v9+
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
     import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
+    // Konfigurasi Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyDMDTxeGLICvfY7l8ArS3d2C1rUndkdclM",
       authDomain: "monitoringgasesp32.firebaseapp.com",
@@ -66,11 +83,13 @@
       appId: "1:528368353087:web:836514d911ce17f4271d8a"
     };
 
+    // Inisialisasi Firebase
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
+    // Fungsi update ke tampilan
     function updateValue(id, value, satuan = "ppm") {
-      document.getElementById(id).innerText = value ? `${value} ${satuan}` : "-";
+      document.getElementById(id).innerText = value !== null ? `${value} ${satuan}` : "-";
     }
 
     function updateStatus(id, status) {
@@ -79,14 +98,22 @@
       el.className = "status " + (status || "");
     }
 
-    // Sesuai struktur di Firebase
+    // Listener Realtime Database
     const sensors = ["CH4", "CO2", "NH3"];
     sensors.forEach(sensor => {
-      onValue(ref(db, `SensorData/${sensor}_ppm`), snap => {
-        updateValue(`${sensor}_ppm`, snap.val());
+      const ppmRef = ref(db, `SensorData/${sensor}_ppm`);
+      const statusRef = ref(db, `SensorData/${sensor}_status`);
+
+      onValue(ppmRef, (snapshot) => {
+        const value = snapshot.val();
+        console.log(`${sensor}_ppm:`, value);
+        updateValue(`${sensor}_ppm`, value);
       });
-      onValue(ref(db, `SensorData/${sensor}_status`), snap => {
-        updateStatus(`${sensor}_status`, snap.val());
+
+      onValue(statusRef, (snapshot) => {
+        const status = snapshot.val();
+        console.log(`${sensor}_status:`, status);
+        updateStatus(`${sensor}_status`, status);
       });
     });
   </script>
