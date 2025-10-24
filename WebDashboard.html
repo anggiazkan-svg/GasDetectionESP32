@@ -1,121 +1,95 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gas Detection ESP32</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Dashboard Gas ESP32 — Firebase</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/modern-normalize/modern-normalize.css">
   <style>
     body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      background-color: #f5f6fa;
-      margin: 0;
-      padding: 0;
+      font-family: 'Inter', sans-serif;
+      background: #0b1220;
+      color: #f1f5f9;
+      padding: 24px;
     }
-    h1 {
-      background: #1565c0;
-      color: white;
-      padding: 20px 0;
-      margin: 0;
-    }
-    .card {
-      display: inline-block;
-      background-color: white;
-      border-radius: 15px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      width: 220px;
-      margin: 20px;
-      padding: 15px;
-    }
-    .value {
-      font-size: 1.8rem;
-      margin: 10px 0;
-    }
-    .status {
-      font-weight: bold;
-      color: white;
-      padding: 8px 15px;
-      border-radius: 10px;
-      display: inline-block;
-    }
-    .AMAN { background-color: green; }
-    .WASPADA { background-color: orange; }
+    h1 { margin-bottom: 16px; }
+    .card { background:#1e293b; border-radius:12px; padding:16px; margin-bottom:12px; }
+    .status.safe { color:#22c55e; }
+    .status.warn { color:#facc15; }
+    .status.danger { color:#ef4444; }
   </style>
 </head>
 <body>
+  <h1>Dashboard Deteksi Gas — Kompos Volt</h1>
 
-  <h1>Gas Detection ESP32</h1>
-
-  <div id="container">
-    <div class="card">
-      <h2>CH₄ (Methane)</h2>
-      <div class="value" id="CH4_ppm">Loading...</div>
-      <div class="status" id="CH4_status">-</div>
-    </div>
-
-    <div class="card">
-      <h2>CO₂ (Carbon Dioxide)</h2>
-      <div class="value" id="CO2_ppm">Loading...</div>
-      <div class="status" id="CO2_status">-</div>
-    </div>
-
-    <div class="card">
-      <h2>NH₃ (Ammonia)</h2>
-      <div class="value" id="NH3_ppm">Loading...</div>
-      <div class="status" id="NH3_status">-</div>
-    </div>
+  <div class="card">
+    <h2>CH4 (Metana): <span id="ch4Val">— ppm</span></h2>
+    <p>Status: <span id="ch4Status" class="status">—</span></p>
   </div>
 
-  <!-- Firebase SDKs -->
+  <div class="card">
+    <h2>CO2: <span id="co2Val">— ppm</span></h2>
+    <p>Status: <span id="co2Status" class="status">—</span></p>
+  </div>
+
+  <div class="card">
+    <h2>NH3 (Amonia): <span id="nh3Val">— ppm</span></h2>
+    <p>Status: <span id="nh3Status" class="status">—</span></p>
+  </div>
+
   <script type="module">
-    // Import SDKs modern Firebase v9+
+    // === Import library dari Firebase CDN ===
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
     import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
-    // Konfigurasi Firebase
+    // === Konfigurasi Firebase Web App ===
     const firebaseConfig = {
       apiKey: "AIzaSyDMDTxeGLICvfY7l8ArS3d2C1rUndkdclM",
       authDomain: "monitoringgasesp32.firebaseapp.com",
-      databaseURL: "https://monitoringgasesp32-default-rtdb.firebaseio.com/",
       projectId: "monitoringgasesp32",
       storageBucket: "monitoringgasesp32.firebasestorage.app",
       messagingSenderId: "528368353087",
-      appId: "1:528368353087:web:836514d911ce17f4271d8a"
+      appId: "1:528368353087:web:836514d911ce17f4271d8a",
+      databaseURL: "https://monitoringgasesp32-default-rtdb.firebaseio.com"
     };
 
-    // Inisialisasi Firebase
+    // === Inisialisasi Firebase App & Realtime Database ===
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // Fungsi update ke tampilan
-    function updateValue(id, value, satuan = "ppm") {
-      document.getElementById(id).innerText = value !== null ? `${value} ${satuan}` : "-";
-    }
+    // === Referensi ke path data dari ESP32 ===
+    const dbRef = ref(db, 'SensorData/');
 
-    function updateStatus(id, status) {
-      const el = document.getElementById(id);
-      el.innerText = status || "-";
-      el.className = "status " + (status || "");
-    }
+    // === Elemen tampilan ===
+    const ch4Val = document.getElementById('ch4Val');
+    const co2Val = document.getElementById('co2Val');
+    const nh3Val = document.getElementById('nh3Val');
+    const ch4Status = document.getElementById('ch4Status');
+    const co2Status = document.getElementById('co2Status');
+    const nh3Status = document.getElementById('nh3Status');
 
-    // Listener Realtime Database
-    const sensors = ["CH4", "CO2", "NH3"];
-    sensors.forEach(sensor => {
-      const ppmRef = ref(db, `SensorData/${sensor}_ppm`);
-      const statusRef = ref(db, `SensorData/${sensor}_status`);
+    // === Listener realtime (otomatis update saat data Firebase berubah) ===
+    onValue(dbRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        ch4Val.textContent = Math.round(data.CH4_ppm) + ' ppm';
+        co2Val.textContent = Math.round(data.CO2_ppm) + ' ppm';
+        nh3Val.textContent = Math.round(data.NH3_ppm) + ' ppm';
 
-      onValue(ppmRef, (snapshot) => {
-        const value = snapshot.val();
-        console.log(`${sensor}_ppm:`, value);
-        updateValue(`${sensor}_ppm`, value);
-      });
-
-      onValue(statusRef, (snapshot) => {
-        const status = snapshot.val();
-        console.log(`${sensor}_status:`, status);
-        updateStatus(`${sensor}_status`, status);
-      });
+        updateStatus(ch4Status, data.CH4_status);
+        updateStatus(co2Status, data.CO2_status);
+        updateStatus(nh3Status, data.NH3_status);
+      }
     });
+
+    // === Fungsi bantu warna status ===
+    function updateStatus(el, status) {
+      el.textContent = status;
+      el.className = 'status';
+      if (status === 'AMAN') el.classList.add('safe');
+      else if (status === 'WASPADA') el.classList.add('warn');
+      else el.classList.add('danger');
+    }
   </script>
 </body>
 </html>
