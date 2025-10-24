@@ -71,42 +71,46 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
 
   <script>
-    // Konfigurasi Firebase (gunakan project kamu)
-    const firebaseConfig = {
-  apiKey: "AIzaSyDMDTxeGLICvfY7l8ArS3d2C1rUndkdclM",
-  authDomain: "monitoringgasesp32.firebaseapp.com",
-  projectId: "monitoringgasesp32",
-  storageBucket: "monitoringgasesp32.firebasestorage.app",
-  messagingSenderId: "528368353087",
-  appId: "1:528368353087:web:836514d911ce17f4271d8a"
-};
+   <script>
+  // Konfigurasi Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyDMDTxeGLICvfY7l8ArS3d2C1rUndkdclM",
+    authDomain: "monitoringgasesp32.firebaseapp.com",
+    databaseURL: "https://monitoringgasesp32-default-rtdb.firebaseio.com/",
+    projectId: "monitoringgasesp32",
+    storageBucket: "monitoringgasesp32.appspot.com",
+    messagingSenderId: "528368353087",
+    appId: "1:528368353087:web:836514d911ce17f4271d8a"
+  };
 
-    // Inisialisasi Firebase
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+  // Inisialisasi Firebase
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
 
-    // Fungsi update nilai
-    function updateValue(id, value, satuan = "ppm") {
-      document.getElementById(id).innerText = value ? `${value} ${satuan}` : "-";
-    }
+  // Fungsi update nilai dan status
+  function updateValue(id, value, satuan = "ppm") {
+    document.getElementById(id).innerText = value ? `${value} ${satuan}` : "-";
+  }
 
-    function updateStatus(id, status) {
-      const el = document.getElementById(id);
-      el.innerText = status || "-";
-      el.className = "status " + (status || "");
-    }
+  function updateStatus(id, status) {
+    const el = document.getElementById(id);
+    el.innerText = status || "-";
+    el.className = "status " + (status || "");
+  }
 
-    // Listener Realtime Database
-    const sensors = ["CH4", "CO2", "NH3"];
-    sensors.forEach(sensor => {
-      db.ref(`/SensorData/${sensor}_ppm`).on("value", snap => {
-        updateValue(`${sensor}_ppm`, snap.val());
-      });
-      db.ref(`/SensorData/${sensor}_status`).on("value", snap => {
-        updateStatus(`${sensor}_status`, snap.val());
-      });
+  // Listener Realtime Database — SESUAI DENGAN STRUKTUR FIREBASE KAMU
+  const sensors = ["CH4", "CO2", "NH3"];
+  sensors.forEach(sensor => {
+    db.ref(`/SensorData/${sensor}_ppm`).on("value", snap => {
+      updateValue(`${sensor}_ppm`, snap.val());
     });
-  </script>
+    db.ref(`/SensorData/${sensor}_status`).on("value", snap => {
+      updateStatus(`${sensor}_status`, snap.val());
+    });
+  });
+</script>
+
 </body>
 </html>
+
 
