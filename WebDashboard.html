@@ -66,13 +66,11 @@
     </div>
   </div>
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+  <!-- Firebase v8 SDK -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
-  <script>
-   <script>
-  // Konfigurasi Firebase
+<script>
   const firebaseConfig = {
     apiKey: "AIzaSyDMDTxeGLICvfY7l8ArS3d2C1rUndkdclM",
     authDomain: "monitoringgasesp32.firebaseapp.com",
@@ -83,34 +81,23 @@
     appId: "1:528368353087:web:836514d911ce17f4271d8a"
   };
 
-  // Inisialisasi Firebase
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
 
-  // Fungsi update nilai dan status
-  function updateValue(id, value, satuan = "ppm") {
-    document.getElementById(id).innerText = value ? `${value} ${satuan}` : "-";
-  }
-
-  function updateStatus(id, status) {
-    const el = document.getElementById(id);
-    el.innerText = status || "-";
-    el.className = "status " + (status || "");
-  }
-
-  // Listener Realtime Database — SESUAI DENGAN STRUKTUR FIREBASE KAMU
   const sensors = ["CH4", "CO2", "NH3"];
   sensors.forEach(sensor => {
     db.ref(`/SensorData/${sensor}_ppm`).on("value", snap => {
-      updateValue(`${sensor}_ppm`, snap.val());
+      document.getElementById(`${sensor}_ppm`).innerText = snap.val();
     });
     db.ref(`/SensorData/${sensor}_status`).on("value", snap => {
-      updateStatus(`${sensor}_status`, snap.val());
+      document.getElementById(`${sensor}_status`).innerText = snap.val();
     });
   });
 </script>
 
+
 </body>
 </html>
+
 
 
